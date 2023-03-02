@@ -1,0 +1,9 @@
+FROM opensuse/leap:15.3
+
+RUN zypper install -y apache2
+
+ADD index.html /srv/www/htdocs/
+
+EXPOSE 80
+
+CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]

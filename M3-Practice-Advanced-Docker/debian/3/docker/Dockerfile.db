@@ -1,0 +1,5 @@
+FROM mariadb:10.7
+
+LABEL maintainer="Radoslav Tenekev" version="1.0"
+
+#ADD ./db/db_setup.sql /docker-entrypoint-initdb.d/init.sql

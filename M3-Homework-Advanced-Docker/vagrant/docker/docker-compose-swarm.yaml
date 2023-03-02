@@ -1,0 +1,30 @@
+version: "3.8"
+
+secrets:
+  db_root_password:
+    external: true
+
+networks:
+  app-network:
+
+services:
+  web:
+    image: tenekev/php-nginx
+    deploy:
+      replicas: 10
+    ports:
+      - 80:80
+    volumes:
+      - "/vagrant/docker/web:/var/www/html"
+    networks:
+      - app-network
+  db:
+    image: tenekev/mariadb
+    networks:
+      - app-network
+    volumes:
+      - "/vagrant/docker/db/db_setup.sql:/docker-entrypoint-initdb.d/init.sql"
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets:
+      - db_root_password
