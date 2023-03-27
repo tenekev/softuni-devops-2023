@@ -1,0 +1,18 @@
+FROM openjdk:17
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV LOGSTASH_VERSION 8.6.2
+
+RUN useradd -d /home/lsuser -m lsuser
+WORKDIR /home/lsuser
+
+RUN \
+curl https://artifacts.elastic.co/downloads/logstash/logstash-${LOGSTASH_VERSION}-linux-x86_64.tar.gz --output logstash.tar.gz && \
+tar xvzf logstash.tar.gz && \
+rm -f logstash.tar.gz && \
+chown -R lsuser:lsuser logstash-${LOGSTASH_VERSION}
+
+
+ADD logstash.conf /home/lsuser
+CMD logstash-${LOGSTASH_VERSION}/bin/logstash -f /home/lsuser/logstash.conf --verbose

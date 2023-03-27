@@ -1,0 +1,6 @@
+cluster.name: docker-elastic-stack
+cluster.initial_master_nodes: ["elasticsearch"]
+node.name: elasticsearch
+path.data: /home/esuser/data
+network.host: "0.0.0.0"
+xpack.security.enabled: false

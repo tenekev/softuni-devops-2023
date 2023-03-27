@@ -1,0 +1,21 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+    
+  config.ssh.insert_key = false
+
+  config.vm.define "docker" do |docker|
+    docker.vm.box="shekeriev/debian-11"
+    docker.vm.hostname = "docker.do1.lab"
+    docker.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", "4096"]
+    end
+    docker.vm.network "private_network", ip: "192.168.99.101"
+    docker.vm.provision "shell", path: "install_docker_debian.sh"
+    docker.vm.provision "shell", path: "setup_docker.sh"
+    docker.vm.provision "shell", path: "run_containers.sh"
+    docker.vm.synced_folder "vagrant/", "/vagrant"
+  end
+
+end

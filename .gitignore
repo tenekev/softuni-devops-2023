@@ -1,0 +1,4 @@
+.vagrant
+.docker
+.git
+docker_hub.json

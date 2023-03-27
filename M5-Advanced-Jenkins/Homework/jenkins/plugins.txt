@@ -1,0 +1,12 @@
+git:latest
+github:latest
+gitea:latest
+ssh:latest
+ssh-slaves:latest
+workflow-multibranch:latest
+workflow-aggregator:latest
+ws-cleanup:latest
+configuration-as-code:latest
+blueocean:latest
+blueocean-commons:latest
+blueocean-web:latest

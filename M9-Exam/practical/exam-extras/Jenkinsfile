@@ -1,0 +1,83 @@
+pipeline 
+{
+    agent 
+    {
+        label 'docker'
+    }
+    environment 
+    {
+        DOCKERHUB_CREDENTIALS=credentials('docker_hub')
+    }
+    stages 
+    {
+        stage('Clone Repo') 
+        {
+            steps 
+            {
+                git branch: 'main', url: 'http://192.168.99.202:3000/gitea_user/exam_26_03_2023'
+            }
+        }
+        stage('Build and Run')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-build.yml up -d --force-recreate'
+
+            }
+        }
+        stage('Test WEB Availibility')
+        {
+            steps
+            {
+                script 
+                {
+                    echo 'Wait 30 seconds for webpage';
+                    sh 'sleep 30';
+                    
+                    echo 'Testing reachability'
+                    sh 'echo $(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:8080) | grep 200'
+                }
+            }
+        }
+        stage('Teardown')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-build.yml down'
+            }
+        }
+        stage('Login Docker Hub')
+        {
+            steps 
+            {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+        stage('Build and Push') 
+        {
+            steps 
+            {
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/img-client -f ./client/Dockerfile ./client'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/img-client'
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/img-generator -f ./generator/Dockerfile ./generator'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/img-generator'
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/img-storage -f ./storage/Dockerfile ./storage'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/img-storage' 
+            }
+        }
+        stage('Deploy')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-deploy.yml up -d --force-recreate'
+            }
+        }
+    }
+    post 
+    { 
+        always 
+        { 
+            cleanWs()
+        }
+    }
+}

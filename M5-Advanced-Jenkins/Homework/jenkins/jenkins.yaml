@@ -1,0 +1,154 @@
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+  disableRememberMe: false
+  labelAtoms:
+  - name: "built-in"
+  markupFormatter: "plainText"
+  mode: NORMAL
+  myViewsTabBar: "standard"
+  numExecutors: 0
+  primaryView:
+    all:
+      name: "all"
+  projectNamingStrategy: "standard"
+  quietPeriod: 3
+  remotingSecurity:
+    enabled: true
+  scmCheckoutRetryCount: 0
+  securityRealm:
+    local:
+      allowsSignup: false
+      enableCaptcha: false
+      users:
+      - id: "admin"
+        name: ${json:username:${readFile:/vagrant/credentials/jenkins.json}}
+        password: ${json:password:${readFile:/vagrant/credentials/jenkins.json}}
+        properties:
+        - "apiToken"
+        - "myView"
+        - "timezone"
+        - "mailer"
+        - preferredProvider:
+            providerId: "default"
+        - sshPublicKey:
+            authorizedKeys: ${readFile:/vagrant/credentials/vagrant-at-jenkins.pub}
+  nodes:
+    - permanent:
+        labelString: "docker"
+        mode: NORMAL
+        name: "docker.do1.lab"
+        numExecutors: 2
+        remoteFS: "/home/vagrant"
+        launcher:
+          ssh:
+            host: "192.168.99.102"
+            port: 22
+            credentialsId: "vagrant-at-docker"
+            launchTimeoutSeconds: 60
+            maxNumRetries: 3
+            retryWaitTime: 30
+            sshHostKeyVerificationStrategy:
+              manuallyTrustedKeyVerificationStrategy:
+                requireInitialManualTrust: false
+  slaveAgentPort: -1
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+  views:
+  - all:
+      name: "all"
+  viewsTabBar: "standard"
+
+globalCredentialsConfiguration:
+  configuration:
+    providerFilter: "none"
+    typeFilter: "none"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "vagrant-at-docker"
+              username: ${json:username:${readFile:/vagrant/credentials/vagrant-at-docker.json}}
+              password: ${json:password:${readFile:/vagrant/credentials/vagrant-at-docker.json}}
+              description: "Credentials for Docker Slave Node user"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "gitea"
+              username: ${json:username:${readFile:/vagrant/credentials/gitea.json}}
+              password: ${json:password:${readFile:/vagrant/credentials/gitea.json}}
+              description: "Credentials for a Gitea user"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "dockerhub"
+              username: ${json:username:${readFile:/vagrant/credentials/docker-hub.json}}
+              password: ${json:password:${readFile:/vagrant/credentials/docker-hub.json}}
+              description: "Credentials for Docker Hub user"
+              
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  gitHooks:
+    allowedOnAgents: false
+    allowedOnController: false
+  gitHostKeyVerificationConfiguration:
+    sshHostKeyVerificationStrategy: "knownHostsFileVerificationStrategy"
+  sSHD:
+    port: 6666
+
+unclassified:
+  giteaServers:
+    servers:
+    - credentialsId: gitea
+      displayName: "Gitea SCM"
+      manageHooks: true
+      serverUrl: https://192.168.99.102:3000
+  buildDiscarders:
+    configuredBuildDiscarders:
+    - "jobBuildDiscarder"
+  fingerprints:
+    fingerprintCleanupDisabled: false
+    storage: "file"
+  gitHubPluginConfig:
+    hookUrl: "http://192.168.99.101:8080/github-webhook/"
+  junitTestResultStorage:
+    storage: "file"
+  location:
+    adminAddress: vagrant@example.com
+    url: http://192.168.99.101:8080
+  mailer:
+    charset: "UTF-8"
+    useSsl: false
+    useTls: false
+  pollSCM:
+    pollingThreadCount: 10
+  scmGit:
+    addGitTagAction: false
+    allowSecondFetch: false
+    createAccountBasedOnEmail: false
+    disableGitToolChooser: false
+    hideCredentials: false
+    showEntireCommitSummaryInChanges: false
+    useExistingAccountWithSameEmail: false
+
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  mavenGlobalConfig:
+    globalSettingsProvider: "standard"
+    settingsProvider: "standard"

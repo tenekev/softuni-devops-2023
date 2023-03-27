@@ -1,0 +1,30 @@
+version: "3.8"
+
+networks:
+  app-net:
+
+services:
+  dob-consumer:
+    image: tenekev/consumer
+    build:
+      context: ./consumer
+    ports:
+      - 8080:5000
+    networks:
+      - app-net
+
+  dob-producer:
+    image: tenekev/producer
+    build:
+      context: ./producer
+    networks:
+      - app-net
+
+  dob-storage:
+    image: tenekev/storage
+    build:
+      context: ./storage
+    networks:
+      - app-net
+    environment:
+      MYSQL_ROOT_PASSWORD: "Exam-2021"

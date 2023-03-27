@@ -1,0 +1,97 @@
+pipeline 
+{
+    agent 
+    {
+        label 'docker'
+    }
+    environment 
+    {
+        DOCKERHUB_CREDENTIALS=credentials('docker_hub')
+    }
+    stages 
+    {
+        stage('Clone Repo') 
+        {
+            steps 
+            {
+                git branch: 'main', url: 'http://192.168.99.102:3000/gitea_user/exam'
+            }
+        }
+        stage('Build and Run')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-build.yml up -d --force-recreate'
+
+            }
+        }
+        stage('Test WEB Availibility')
+        {
+            steps
+            {
+                script 
+                {
+                    echo 'Wait 20 seconds for webpage';
+                    sh 'sleep 20';
+                    
+                    echo 'Testing reachability'
+                    sh 'echo $(curl --write-out "%{http_code}" --silent --output /dev/null http://localhost:8080) | grep 200'
+                }
+            }
+        }
+        stage('Test DB Availibility')
+        {
+            steps
+            {
+                script 
+                {
+                    echo 'Wait 20 seconds for database'
+                    sh 'sleep 20'
+
+                    echo 'Testing content'
+                    sh "curl --silent http://localhost:8080 | grep Are"
+                }
+            }
+        }
+        stage('Teardown')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-build.yml down'
+            }
+        }
+        stage('Login Docker Hub')
+        {
+            steps 
+            {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+        stage('Build and Push') 
+        {
+            steps 
+            {
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/consumer -f ./consumer/Dockerfile ./consumer'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/consumer'
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/producer -f ./producer/Dockerfile ./producer'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/producer'
+                sh 'docker image build -t $DOCKERHUB_CREDENTIALS_USR/storage -f ./storage/Dockerfile ./storage'
+                sh 'docker image push $DOCKERHUB_CREDENTIALS_USR/storage' 
+            }
+        }
+        stage('Deploy')
+        {
+            steps
+            {
+                sh 'docker compose -f docker-compose-deploy.yml up -d --force-recreate'
+            }
+        }
+    }
+    post 
+    { 
+        always 
+        { 
+            cleanWs()
+        }
+    }
+}

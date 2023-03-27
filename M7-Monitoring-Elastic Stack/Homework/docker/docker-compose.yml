@@ -1,0 +1,40 @@
+version: '3.4'
+
+networks:
+  elastic_stack:
+    driver: bridge
+
+services:
+  elasticsearch:
+    build: elasticsearch/
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+    user: esuser
+    networks:
+      - elastic_stack
+    volumes:
+      - /vagrant/docker/elasticsearch/data:/home/esuser/data 
+      - /vagrant/docker/elasticsearch/logs:/var/log/elasticsearch
+      - /vagrant/docker/elasticsearch/el_data:/var/lib/elasticsearch
+  
+  logstash:
+    build: logstash/
+    ports:
+      - "5000:5000"
+    user: lsuser
+    networks:
+      - elastic_stack
+
+  kibana:
+    build: kibana/
+    ports:
+      - "5601:5601"
+    user: kbuser
+    networks:
+      - elastic_stack
+
+
+

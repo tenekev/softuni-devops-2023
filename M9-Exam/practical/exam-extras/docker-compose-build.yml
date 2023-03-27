@@ -1,0 +1,37 @@
+version: "3.8"
+
+networks:
+  exam-net:
+
+services:
+  con-client:
+    container_name: con-client
+    image: tenekev/img-client
+    build:
+      context: ./client
+    ports:
+      - 8080:5000
+    networks:
+      - exam-net
+    environment:
+      DB_PASS: "ExamPa$$w0rd"
+
+  con-generator:
+    container_name: con-generator
+    image: tenekev/img-generator
+    build:
+      context: ./generator
+    networks:
+      - exam-net
+    environment:
+      DB_PASS: "ExamPa$$w0rd"
+
+  con-storage:
+    container_name: con-storage
+    image: tenekev/img-storage
+    build:
+      context: ./storage
+    networks:
+      - exam-net
+    environment:
+      MYSQL_ROOT_PASSWORD: "ExamPa$$w0rd"

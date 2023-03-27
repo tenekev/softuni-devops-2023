@@ -1,0 +1,56 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+    
+  config.ssh.insert_key = false
+  config.vm.boot_timeout = 1200
+
+  config.vm.define "monitoring" do |monitoring|
+    monitoring.vm.box = "shekeriev/debian-11"
+    monitoring.vm.hostname = "vm103.do1.exam"
+    monitoring.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", "1536"]
+    end
+    monitoring.vm.network "private_network", ip: "192.168.99.103"
+    monitoring.vm.network "forwarded_port", guest: 3000, host: 8082
+    monitoring.vm.provision "shell", path: "common_steps.sh"
+	  monitoring.vm.provision "shell", path: "install_docker.sh"
+    monitoring.vm.provision "shell", inline: "HOSTNAME=monitoring docker compose -f /vagrant/monitoring/docker-compose-metrics.yml up -d --force-recreate --remove-orphans"
+  end
+
+  config.vm.define "containers" do |containers|
+    containers.vm.box = "shekeriev/debian-11"
+    containers.vm.hostname = "vm102.do1.exam"
+    containers.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
+    end
+    containers.vm.network "private_network", ip: "192.168.99.102"
+    containers.vm.network "forwarded_port", guest: 8080, host: 8081
+    containers.vm.provision "shell", path: "common_steps.sh"
+	  containers.vm.provision "shell", path: "install_docker.sh"
+    containers.vm.provision "shell", path: "./gitea/setup.sh"
+    containers.vm.provision "shell", path: "./gitea/setup_repo.sh"
+    containers.vm.provision "shell", inline: "HOSTNAME=containers docker compose -f /vagrant/monitoring/docker-compose-exporters.yml up -d --force-recreate --remove-orphans"
+  end
+
+  config.vm.define "pipelines" do |pipelines|
+    pipelines.vm.box="shekeriev/debian-11"
+    pipelines.vm.hostname = "vm101.do1.exam"
+    pipelines.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", "2048"]
+    end
+    pipelines.vm.network "private_network", ip: "192.168.99.101"
+    pipelines.vm.network "forwarded_port", guest: 8080, host: 8080
+    pipelines.vm.provision "shell", path: "common_steps.sh"
+    pipelines.vm.provision "shell", path: "install_docker.sh"
+	  pipelines.vm.provision "shell", path: "./jenkins/install.sh"
+    pipelines.vm.provision "shell", path: "./jenkins/setup.sh"
+    pipelines.vm.provision "shell", inline: "HOSTNAME=pipelines docker compose -f /vagrant/monitoring/docker-compose-exporters.yml up -d --force-recreate --remove-orphans"
+
+    #pipelines.trigger.after :up do |trigger|
+    #  trigger.run = {"inline": "vagrant ssh pipelines -c '/vagrant/cleanup.sh'"}
+    #end
+  end
+  
+end
